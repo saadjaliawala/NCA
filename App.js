@@ -27,6 +27,7 @@ import {UserDetails} from './src/redux/actions/UserDetails.js';
 import {AllUsers} from './src/redux/actions/AllUsers.js';
 import {AllDummyUsers} from './src/redux/actions/AllUsers.js';
 import {UsersScreenUsers} from './src/redux/actions/AllUsers.js';
+import messaging from '@react-native-firebase/messaging';
 
 
 import {
@@ -50,27 +51,20 @@ const [currentUserActive , SetCurrentUserActive ] = useState();
 const [settingsnapshot , setsettingsnapshot ] = useState(true);
 
 
-  const onAuthStateChanged = (FirebaseUser) => {
 
-    // console.log(FirebaseUser);
 
-    // let AllUserArray = [];
-    // console.log( "active" , currentUserActive);
+   const  onAuthStateChanged = (FirebaseUser) => {
 
-    // alert("on auth state change");
     
-      // console.log("firebase user " , FirebaseUser);
       if(FirebaseUser){
-        // alert("Saad");
+        
         store.dispatch(UserDetails(FirebaseUser));
-        // console.log("Avv");
+      
       }
       SetFirebaseUser(FirebaseUser);
 
       if (FirebaseUser  ) {
-        // alert("Saad");
-        //   console.log(FirebaseUser);
-        //   const { FirebaseUser } = FirebaseUser;
+        
 
           firestore()
           .collection('Users')
@@ -85,19 +79,13 @@ const [settingsnapshot , setsettingsnapshot ] = useState(true);
           } , {merge: true} )
         
       }
+
+      if(FirebaseUser)
+      {
+        checkPermission(FirebaseUser);
+      }
       
-      // if(settingsnapshot) {
-
-      //   firestore()
-      // .collection('Users')
-      // .onSnapshot(patanhy => {
-      //   console.log("pata nhy ")
-      // })
-
-      // setsettingsnapshot(false);
-
-      // }
-      
+    
       
       
       firestore()
@@ -119,35 +107,11 @@ const [settingsnapshot , setsettingsnapshot ] = useState(true);
       } )
 
 
-      // .get()
-      // .then(querySnapshot => {
-        
-               
-      //    querySnapshot.forEach(documentSnapShot => {
-      //        console.log(documentSnapShot.data());
-      //        if(FirebaseUser.uid != documentSnapShot.data().uid)
-      //        {
-      //        AllUserArray.push(documentSnapShot.data());
-      //        }
-             
-      //    })
-
-        //  const a = [...AllUserArray];
-        //  const b = [...AllUserArray];
-        // console.log("all user array" , AllUserArray);
-
-        // store.dispatch(AllUsers(AllUserArray2));
-        //  store.dispatch(AllDummyUsers(AllUserArray2));
-        //  store.dispatch(UsersScreenUsers(AllUserArray2));
-
-        //  store.dispatch(AllDummyUsers(AllUserArray));
-      // console.log("all user array" , AllUserArray);
-        
-
-      // })
+     
       
-  }
 
+
+}
 
   
 useEffect(() => {
@@ -155,6 +119,7 @@ useEffect(() => {
   {
     console.log("abcd");
     SetDidUpdate(false);
+    // CheckUser();
      auth().onAuthStateChanged(onAuthStateChanged);
 
      SplashScreen.hide();
@@ -167,6 +132,37 @@ useEffect(() => {
 
 
 },[])
+
+
+const checkPermission = (user) => {
+  messaging().hasPermission()
+      .then(enabled => {
+        if (enabled) {
+          console.log("Permission granted");
+          getToken(user);
+        } else {
+          console.log("Request Permission");
+          requestPermission(user);
+        }
+      });
+
+}
+
+const requestPermission = async (user) => {
+  messaging().requestPermission(user)
+    .then(() => {
+      getToken(user);
+    })
+    .catch(error => {
+      console.log('permission rejected');
+    });
+}
+
+const getToken = async (user) => {
+  let fcmToken = await messaging().getToken();
+  console.log("after fcmToken: ", fcmToken);
+  firestore().collection("FcmTokens").doc(fcmToken).set({ uid: user?.uid })
+}
 
 
 const _handleAppStateChange = (nextAppState) => {

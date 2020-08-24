@@ -194,6 +194,8 @@ dependencies {
 
     implementation project(':react-native-splash-screen')
 
+    implementation project(path: ":@react-native-firebase_messaging")
+
     implementation "com.android.support:appcompat-v7:23.0.1"
     implementation "com.facebook.react:react-native:+"
 
